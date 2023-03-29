@@ -36,12 +36,15 @@ const Home: NextPage = () => {
         {data?.map((post) => (
           <div key={post.id} className="m-3 flex">
             <img width={40} alt="pic" src={post.author?.profileImageUrl} />
-            <div>
+            <Link href={`/post/${post.id}`}>
               <div className="flex">
-                {post.author?.username} . {dayjs(post.createdAt).fromNow()}
+                <Link href={`/@${post.author?.username ?? ""}`}>
+                  {post.author?.username}
+                </Link>{" "}
+                . {dayjs(post.createdAt).fromNow()}
               </div>
               {post.content}
-            </div>
+            </Link>
           </div>
         ))}
       </main>
