@@ -10,6 +10,7 @@ import relativeTime from "dayjs/plugin/relativeTime";
 dayjs.extend(relativeTime);
 
 import { api } from "~/utils/api";
+import { useState } from "react";
 
 const Home: NextPage = () => {
   const { data } = api.posts.getAll.useQuery();
@@ -49,12 +50,28 @@ const Home: NextPage = () => {
 
 function Composer() {
   const { user } = useUser();
-  console.log(user);
+  const [content, setContent] = useState("");
+
+  const ctx = api.useContext();
+
+  const { mutate } = api.posts.create.useMutation({
+    onSuccess: () => {
+      setContent("");
+      void ctx.posts.getAll.invalidate();
+    },
+  });
 
   return (
     <div className="flex">
       <img width={40} alt="pic" src={user?.profileImageUrl} />
-      <input />
+      <input value={content} onChange={(e) => setContent(e.target.value)} />
+      <button
+        onClick={() => {
+          mutate({ content });
+        }}
+      >
+        Post
+      </button>
     </div>
   );
 }
