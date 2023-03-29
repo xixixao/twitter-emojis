@@ -11,6 +11,7 @@ dayjs.extend(relativeTime);
 
 import { api } from "~/utils/api";
 import { useState } from "react";
+import { toast } from "react-hot-toast";
 
 const Home: NextPage = () => {
   const { data } = api.posts.getAll.useQuery();
@@ -54,10 +55,14 @@ function Composer() {
 
   const ctx = api.useContext();
 
-  const { mutate } = api.posts.create.useMutation({
+  const { mutate, isLoading: isPosting } = api.posts.create.useMutation({
     onSuccess: () => {
       setContent("");
       void ctx.posts.getAll.invalidate();
+    },
+    onError: (error) => {
+      const message = error.data?.zodError?.fieldErrors.content;
+      toast.error("Failed to post! " + (message?.[0] ?? ""));
     },
   });
 
@@ -65,13 +70,16 @@ function Composer() {
     <div className="flex">
       <img width={40} alt="pic" src={user?.profileImageUrl} />
       <input value={content} onChange={(e) => setContent(e.target.value)} />
-      <button
-        onClick={() => {
-          mutate({ content });
-        }}
-      >
-        Post
-      </button>
+      {!isPosting ? (
+        <button
+          onClick={() => {
+            mutate({ content });
+          }}
+        >
+          Post
+        </button>
+      ) : null}
+      {isPosting ? <div>Posting...</div> : null}
     </div>
   );
 }
