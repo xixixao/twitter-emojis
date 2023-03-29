@@ -1,4 +1,5 @@
 import { clerkClient } from "@clerk/nextjs/server";
+import { Post } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
@@ -28,20 +29,19 @@ export const postsRouter = createTRPCRouter({
       take: 100,
       orderBy: { createdAt: "desc" },
     });
-    const users = (
-      await clerkClient.users.getUserList({
-        userId: posts.map((post) => post.authorId),
-      })
-    ).map(({ id, username, profileImageUrl }) => ({
-      id,
-      username,
-      profileImageUrl,
-    }));
-    return posts.map((post) => ({
-      ...post,
-      author: users.find((user) => user.id === post.authorId),
-    }));
+    return addUsersToPosts(posts);
   }),
+
+  getForUser: publicProcedure
+    .input(z.object({ userId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const posts = await ctx.prisma.post.findMany({
+        where: { authorId: input.userId },
+        take: 100,
+        orderBy: { createdAt: "desc" },
+      });
+      return addUsersToPosts(posts);
+    }),
 
   create: privateProcedure
     .input(
@@ -67,3 +67,19 @@ export const postsRouter = createTRPCRouter({
       return post;
     }),
 });
+
+async function addUsersToPosts(posts: Post[]) {
+  const users = (
+    await clerkClient.users.getUserList({
+      userId: posts.map((post) => post.authorId),
+    })
+  ).map(({ id, username, profileImageUrl }) => ({
+    id,
+    username,
+    profileImageUrl,
+  }));
+  return posts.map((post) => ({
+    ...post,
+    author: users.find((user) => user.id === post.authorId),
+  }));
+}

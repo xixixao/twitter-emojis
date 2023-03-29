@@ -2,6 +2,7 @@ import { createProxySSGHelpers } from "@trpc/react-query/ssg";
 import { type GetStaticProps, type NextPage } from "next";
 import Head from "next/head";
 import SuperJSON from "superjson";
+import { Posts } from "~/components/Posts";
 import { appRouter } from "~/server/api/root";
 import { prisma } from "~/server/db";
 import { api } from "~/utils/api";
@@ -23,11 +24,20 @@ const ProfilePage: NextPage<{ username: string }> = ({ username }) => {
         <div>
           <img width={40} alt="pic" src={data?.profileImageUrl} />
           {data?.username}
+          <ProfilePosts userId={data.id} />
         </div>
       </main>
     </>
   );
 };
+
+function ProfilePosts({ userId }: { userId: string }) {
+  const { data } = api.posts.getForUser.useQuery({ userId });
+  if (!data) {
+    return null;
+  }
+  return <Posts posts={data} />;
+}
 
 export const getStaticProps: GetStaticProps = async (context) => {
   const ssg = createProxySSGHelpers({

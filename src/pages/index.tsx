@@ -3,15 +3,10 @@ import { type NextPage } from "next";
 import Head from "next/head";
 import Image from "next/image";
 import Link from "next/link";
-
-import dayjs from "dayjs";
-import relativeTime from "dayjs/plugin/relativeTime";
-
-dayjs.extend(relativeTime);
-
 import { api } from "~/utils/api";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
+import { Posts } from "~/components/Posts";
 
 const Home: NextPage = () => {
   const { data } = api.posts.getAll.useQuery();
@@ -33,20 +28,7 @@ const Home: NextPage = () => {
             <Composer />
           </>
         )}
-        {data?.map((post) => (
-          <div key={post.id} className="m-3 flex">
-            <img width={40} alt="pic" src={post.author?.profileImageUrl} />
-            <Link href={`/post/${post.id}`}>
-              <div className="flex">
-                <Link href={`/@${post.author?.username ?? ""}`}>
-                  {post.author?.username}
-                </Link>{" "}
-                . {dayjs(post.createdAt).fromNow()}
-              </div>
-              {post.content}
-            </Link>
-          </div>
-        ))}
+        {data && <Posts posts={data} />}
       </main>
     </>
   );
